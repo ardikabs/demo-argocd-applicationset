@@ -3,8 +3,10 @@ namespace: foo
 clusters:
   backend:
     dev:
-      enabled: "true"
+      enabled: true
+
     stg:
-      enabled: "true"
+      enabled: true
+
     prd:
-      enabled: "false"
+      enabled: false

@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: stg-backend-app-2
+  name: stg-backend-app-dynamic
   namespace: argocd
 spec:
   goTemplate: true
@@ -44,4 +44,3 @@ spec:
           - CreateNamespace=true
   syncPolicy:
     preserveResourcesOnDeletion: true
-#   templatePatch: |-

@@ -3,8 +3,16 @@ namespace: foobar
 clusters:
   backend:
     dev:
-      enabled: "true"
+      enabled: true
+
     stg:
-      enabled: "true"
+      enabled: true
+
+      syncPolicy:
+        automated:
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+
     prd:
-      enabled: "false"
+      enabled: false

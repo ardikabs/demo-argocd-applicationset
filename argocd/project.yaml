@@ -14,6 +14,9 @@ spec:
     - namespace: "*"
       name: in-cluster
       server: "https://kubernetes.default.svc"
+    - namespace: "*"
+      name: local-secondary
+      server: "https://kubernetes.default.svc.cluster.local"
   clusterResourceWhitelist:
     - group: "*"
       kind: "*"

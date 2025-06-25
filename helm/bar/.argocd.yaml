@@ -3,8 +3,19 @@ namespace: bar
 clusters:
   backend:
     dev:
-      enabled: "true"
+      enabled: true
+
     stg:
-      enabled: "true"
+      enabled: true
+
+      helm:
+        valueFiles:
+          - .values.stg.yaml
+          - values.stg.yaml
+
+        parameters:
+          - name: disableCronJob
+            value: "true"
+
     prd:
-      enabled: "false"
+      enabled: false

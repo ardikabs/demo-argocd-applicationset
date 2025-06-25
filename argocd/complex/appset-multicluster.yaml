@@ -1,0 +1,83 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: stg-backend-apps
+  namespace: argocd
+spec:
+  syncPolicy:
+    preserveResourcesOnDeletion: true
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - matrix:
+        generators:
+          - matrix:
+              generators:
+                - git:
+                    repoURL: git@github.com:ardikabs/demo-argocd-applicationset.git
+                    revision: HEAD
+                    files:
+                      - path: helm/*/.argocd.yaml
+                    values:
+                      envName: "stg"
+                      domainName: "backend"
+                - clusters:
+                    selector:
+                      matchLabels:
+                        env: "{{ .values.envName }}"
+                        domain: "{{ .values.domainName }}"
+          - git:
+              repoURL: git@github.com:ardikabs/demo-argocd-applicationset.git
+              revision: HEAD
+              files:
+                - path: helm/defaults.yaml
+              values:
+                clusterName: "{{ .name }}"
+                clusterSuffix: '{{ index .metadata.labels "cluster/suffix" }}'
+      selector:
+        matchLabels:
+          clusters.backend.stg.enabled: "true"
+  template:
+    metadata:
+      name: "{{ .values.envName }}-{{ .values.domainName }}-{{ index .path.segments 1 }}-{{ .values.clusterSuffix }}"
+      labels:
+        systems.superbank.io/service: "{{ index .path.segments 1 }}"
+        systems.superbank.io/cluster: "{{ .values.clusterName }}"
+        systems.superbank.io/env: "{{ .values.envName }}"
+        systems.superbank.io/domain: "{{ .values.domainName }}"
+      namespace: argocd
+    spec:
+      project: stg-backend-apps
+      source:
+        repoURL: git@github.com:ardikabs/demo-argocd-applicationset.git
+        targetRevision: HEAD
+        path: "helm/{{ index .path.segments 1 }}"
+        helm:
+          releaseName: "{{ index .path.segments 1 }}"
+          valueFiles: []
+          parameters: []
+      destination:
+        name: "{{ .values.clusterName }}"
+        namespace: "{{ .namespace }}"
+      syncPolicy: {}
+      ignoreDifferences: []
+  templatePatch: |-
+    {{- $defVal := .defaults.clusters.stg }}
+    {{- $meta := .clusters.backend.stg }}
+
+    spec:
+      source:
+        helm:
+          valueFiles:
+          {{- range $valueFile := default $defVal.helm.valueFiles (and (hasKey $meta "helm") $meta.helm.valueFiles) | default (list) }}
+            - {{ $valueFile | toJson }}
+          {{- end }}
+          {{- if and (hasKey $meta "helm") $meta.helm.parameters }}
+          parameters: {{ $meta.helm.parameters | toJson }}
+          {{- end }}
+
+      {{- $metaSyncPolicy := and (hasKey $meta "syncPolicy") $meta.syncPolicy | default (dict) }}
+      syncPolicy: {{ default $defVal.syncPolicy $metaSyncPolicy | toJson }}
+
+      {{- $metaIgnoreDifferences := and (hasKey $meta "ignoreDifferences") $meta.ignoreDifferences | default (list) }}
+      ignoreDifferences: {{ concat $defVal.ignoreDifferences $metaIgnoreDifferences | toJson }}

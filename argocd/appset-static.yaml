@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: stg-backend-app-1
+  name: stg-backend-app-static
   namespace: argocd
 spec:
   generators:

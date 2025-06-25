@@ -3,8 +3,10 @@ namespace: barfoo
 clusters:
   backend:
     dev:
-      enabled: "true"
+      enabled: true
+
     stg:
-      enabled: "false"
+      enabled: true
+
     prd:
-      enabled: "false"
+      enabled: false

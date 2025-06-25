@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: stg-backend-app-3
+  name: stg-backend-apps
   namespace: argocd
 spec:
   syncPolicy:
@@ -16,14 +16,14 @@ spec:
               revision: HEAD
               files:
                 - path: helm/*/.argocd.yaml
-            selector:
-              matchLabels:
-                clusters.backend.stg.enabled: "true"
           - git:
               repoURL: git@github.com:ardikabs/demo-argocd-applicationset.git
               revision: HEAD
               files:
                 - path: helm/defaults.yaml
+      selector:
+        matchLabels:
+          clusters.backend.stg.enabled: "true"
   template:
     metadata:
       name: "stg-backend-{{ index .path.segments 1 }}-1"
@@ -48,6 +48,7 @@ spec:
   templatePatch: |-
     {{- $defVal := .defaults.clusters.stg }}
     {{- $meta := .clusters.backend.stg }}
+
     spec:
       source:
         helm:
@@ -58,5 +59,9 @@ spec:
           {{- if and (hasKey $meta "helm") $meta.helm.parameters }}
           parameters: {{ $meta.helm.parameters | toJson }}
           {{- end }}
-      syncPolicy: {{ default $defVal.syncPolicy (and (hasKey $meta "syncPolicy") $meta.syncPolicy) | toJson }}
-      ignoreDifferences: {{ default $defVal.ignoreDifferences (and (hasKey $meta "ignoreDifferences") $meta.ignoreDifferences) | toJson }}
+
+      {{- $metaSyncPolicy := and (hasKey $meta "syncPolicy") $meta.syncPolicy | default (dict) }}
+      syncPolicy: {{ default $defVal.syncPolicy $metaSyncPolicy | toJson }}
+
+      {{- $metaIgnoreDifferences := and (hasKey $meta "ignoreDifferences") $meta.ignoreDifferences | default (list) }}
+      ignoreDifferences: {{ concat $defVal.ignoreDifferences $metaIgnoreDifferences | toJson }}
