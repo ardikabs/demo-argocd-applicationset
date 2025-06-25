@@ -12,50 +12,51 @@ spec:
     - matrix:
         generators:
           - git:
-              repoURL: https://github.com/ardikabs/demo-argocd-applicationset.git
+              repoURL: git@github.com:ardikabs/demo-argocd-applicationset.git
+              revision: HEAD
+              files:
+                - path: helm/*/.argocd.yaml
+            selector:
+              matchLabels:
+                clusters.backend.stg.enabled: "true"
+          - git:
+              repoURL: git@github.com:ardikabs/demo-argocd-applicationset.git
               revision: HEAD
               files:
                 - path: helm/defaults.yaml
-          - git:
-              repoURL: https://github.com/ardikabs/demo-argocd-applicationset.git
-              revision: HEAD
-              files:
-                - path: helm/*/.metadata.yaml
-            selector:
-              matchLabels:
-                cluster.backend.stg.enabled: "true"
   template:
     metadata:
-      name: "stg-backend-{{ .name }}-1"
+      name: "stg-backend-{{ index .path.segments 1 }}-1"
       labels:
-        systems.superbank.io/service: "{{ .name }}"
+        systems.superbank.io/service: "{{ index .path.segments 1 }}"
+      namespace: argocd
     spec:
       project: stg-backend-apps
       source:
-        repoURL: https://gitlab.com/ardikabs/demo-argocd-applicationset.git
+        repoURL: git@github.com:ardikabs/demo-argocd-applicationset.git
         targetRevision: HEAD
-        path: "helm/{{ .name }}"
+        path: "helm/{{ index .path.segments 1 }}"
         helm:
-          releaseName: "{{ .name }}"
-          valueFiles: "{{ .defaults.clusters.dev.valueFiles | toYaml }}"
+          releaseName: "{{ index .path.segments 1 }}"
+          valueFiles: []
           parameters: []
       destination:
-        name: stg-backend-1
+        name: in-cluster
         namespace: "{{ .namespace }}"
       syncPolicy: {}
       ignoreDifferences: []
   templatePatch: |-
-    {{- $defVal := .defaults.cluster.backend.stg }}
-    {{- $meta := .cluster.backend.stg }}
+    {{- $defVal := .defaults.clusters.stg }}
+    {{- $meta := .clusters.backend.stg }}
     spec:
       source:
         helm:
           valueFiles:
-          {{- range $valueFile := (default $defVal.helm.valueFiles $meta.helm.valueFiles) }}
+          {{- range $valueFile := default $defVal.helm.valueFiles (and (hasKey $meta "helm") $meta.helm.valueFiles) | default (list) }}
             - {{ $valueFile | toJson }}
           {{- end }}
-          {{- if $meta.helm.parameters }}
+          {{- if and (hasKey $meta "helm") $meta.helm.parameters }}
           parameters: {{ $meta.helm.parameters | toJson }}
           {{- end }}
-      syncPolicy: {{ default $defVal.syncPolicy $meta.syncPolicy | toJson }}
-      ignoreDifferences: {{ default $defVal.ignoreDifferences $meta.ignoreDifferences | toJson }}
+      syncPolicy: {{ default $defVal.syncPolicy (and (hasKey $meta "syncPolicy") $meta.syncPolicy) | toJson }}
+      ignoreDifferences: {{ default $defVal.ignoreDifferences (and (hasKey $meta "ignoreDifferences") $meta.ignoreDifferences) | toJson }}

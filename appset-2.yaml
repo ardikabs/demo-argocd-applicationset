@@ -10,7 +10,7 @@ spec:
     - matrix:
         generators:
           - git:
-              repoURL: https://github.com/ardikabs/demo-argocd-applicationset.git
+              repoURL: git@github.com:ardikabs/demo-argocd-applicationset.git
               revision: HEAD
               files:
                 - path: runtime/stg-backend.yaml
@@ -22,7 +22,7 @@ spec:
     spec:
       project: stg-backend-apps
       source:
-        repoURL: https://gitlab.com/ardikabs/demo-argocd-applicationset.git
+        repoURL: git@github.com:ardikabs/demo-argocd-applicationset.git
         targetRevision: HEAD
         path: "helm/{{ .name }}"
         helm:

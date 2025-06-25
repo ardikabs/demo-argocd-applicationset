@@ -5,6 +5,6 @@ clusters:
     dev:
       enabled: "true"
     stg:
-      enabled: "true"
+      enabled: "false"
     prd:
       enabled: "false"

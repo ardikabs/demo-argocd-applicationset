@@ -9,6 +9,7 @@ spec:
   description: "All applications related to backend team for stg environment"
   sourceRepos:
     - "https://github.com/ardikabs/demo-argocd-applicationset.git"
+    - "git@github.com:ardikabs/demo-argocd-applicationset.git"
   destinations:
     - namespace: "*"
       name: in-cluster
