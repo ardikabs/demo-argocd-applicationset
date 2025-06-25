@@ -1,0 +1,7 @@
+services:
+  - name: "foo"
+    namespace: "foo"
+  - name: "bar"
+    namespace: "bar"
+  - name: "foobar"
+    namespace: "foo"

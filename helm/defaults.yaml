@@ -1,0 +1,81 @@
+defaults:
+  clusters:
+    dev:
+      helm:
+        valueFiles:
+          - ../base/values.yaml
+          - values.stg.yaml
+          - .values.stg.yaml
+
+      syncPolicy:
+        automated:
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+
+      ignoreDifferences:
+        - group: networking.istio.io
+          kind: VirtualService
+          jqPathExpressions:
+            # ignore any changes to the vs.spec.http[*].match[*].headers
+            # which will help us to enable header-based canary through argo-rollouts
+            - .spec.http[]? | select(any(.match[]?; has("headers")))
+            # ignore the vs.spec.http[*].route[*] that has "weight" field
+            # as the field will be managed by argo-rollouts during canary deployment
+            - .spec.http[].route[]? | select(has("weight"))
+        - group: ""
+          kind: Service
+          jsonPointers:
+            - /spec/selector/rollouts-pod-template-hash
+
+    stg:
+      helm:
+        valueFiles:
+          - ../base/values.yaml
+          - values.stg.yaml
+          - .values.stg.yaml
+
+      syncPolicy:
+        syncOptions:
+          - CreateNamespace=true
+
+      ignoreDifferences:
+        - group: networking.istio.io
+          kind: VirtualService
+          jqPathExpressions:
+            # ignore any changes to the vs.spec.http[*].match[*].headers
+            # which will help us to enable header-based canary through argo-rollouts
+            - .spec.http[]? | select(any(.match[]?; has("headers")))
+            # ignore the vs.spec.http[*].route[*] that has "weight" field
+            # as the field will be managed by argo-rollouts during canary deployment
+            - .spec.http[].route[]? | select(has("weight"))
+        - group: ""
+          kind: Service
+          jsonPointers:
+            - /spec/selector/rollouts-pod-template-hash
+
+    prd:
+      helm:
+        valueFiles:
+          - ../base/values.yaml
+          - values.stg.yaml
+          - .values.stg.yaml
+
+      syncPolicy:
+        syncOptions:
+          - CreateNamespace=true
+
+      ignoreDifferences:
+        - group: networking.istio.io
+          kind: VirtualService
+          jqPathExpressions:
+            # ignore any changes to the vs.spec.http[*].match[*].headers
+            # which will help us to enable header-based canary through argo-rollouts
+            - .spec.http[]? | select(any(.match[]?; has("headers")))
+            # ignore the vs.spec.http[*].route[*] that has "weight" field
+            # as the field will be managed by argo-rollouts during canary deployment
+            - .spec.http[].route[]? | select(has("weight"))
+        - group: ""
+          kind: Service
+          jsonPointers:
+            - /spec/selector/rollouts-pod-template-hash

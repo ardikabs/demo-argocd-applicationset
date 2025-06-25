@@ -1,0 +1,10 @@
+namespace: foo
+
+clusters:
+  backend:
+    dev:
+      enabled: "true"
+    stg:
+      enabled: "true"
+    prd:
+      enabled: "false"

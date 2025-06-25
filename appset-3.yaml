@@ -1,0 +1,61 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: stg-backend-app-3
+  namespace: argocd
+spec:
+  syncPolicy:
+    preserveResourcesOnDeletion: true
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - matrix:
+        generators:
+          - git:
+              repoURL: https://github.com/ardikabs/demo-argocd-applicationset.git
+              revision: HEAD
+              files:
+                - path: helm/defaults.yaml
+          - git:
+              repoURL: https://github.com/ardikabs/demo-argocd-applicationset.git
+              revision: HEAD
+              files:
+                - path: helm/*/.metadata.yaml
+            selector:
+              matchLabels:
+                cluster.backend.stg.enabled: "true"
+  template:
+    metadata:
+      name: "stg-backend-{{ .name }}-1"
+      labels:
+        systems.superbank.io/service: "{{ .name }}"
+    spec:
+      project: stg-backend-apps
+      source:
+        repoURL: https://gitlab.com/ardikabs/demo-argocd-applicationset.git
+        targetRevision: HEAD
+        path: "helm/{{ .name }}"
+        helm:
+          releaseName: "{{ .name }}"
+          valueFiles: "{{ .defaults.clusters.dev.valueFiles | toYaml }}"
+          parameters: []
+      destination:
+        name: stg-backend-1
+        namespace: "{{ .namespace }}"
+      syncPolicy: {}
+      ignoreDifferences: []
+  templatePatch: |-
+    {{- $defVal := .defaults.cluster.backend.stg }}
+    {{- $meta := .cluster.backend.stg }}
+    spec:
+      source:
+        helm:
+          valueFiles:
+          {{- range $valueFile := (default $defVal.helm.valueFiles $meta.helm.valueFiles) }}
+            - {{ $valueFile | toJson }}
+          {{- end }}
+          {{- if $meta.helm.parameters }}
+          parameters: {{ $meta.helm.parameters | toJson }}
+          {{- end }}
+      syncPolicy: {{ default $defVal.syncPolicy $meta.syncPolicy | toJson }}
+      ignoreDifferences: {{ default $defVal.ignoreDifferences $meta.ignoreDifferences | toJson }}

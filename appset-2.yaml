@@ -1,0 +1,47 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: stg-backend-app-2
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - matrix:
+        generators:
+          - git:
+              repoURL: https://github.com/ardikabs/demo-argocd-applicationset.git
+              revision: HEAD
+              files:
+                - path: runtime/stg-backend.yaml
+          - list:
+              elementsYaml: "{{ .services | toJson }}"
+  template:
+    metadata:
+      name: "stg-backend-{{ .name }}-1"
+    spec:
+      project: stg-backend-apps
+      source:
+        repoURL: https://gitlab.com/ardikabs/demo-argocd-applicationset.git
+        targetRevision: HEAD
+        path: "helm/{{ .name }}"
+        helm:
+          releaseName: "{{ .name }}"
+          valueFiles:
+            - ../base/values.yaml
+            - values.stg.yaml
+            - .values.stg.yaml
+          parameters:
+            - name: eksCluster
+              value: "1"
+            - name: disableCronJob
+              value: "false"
+      destination:
+        name: in-cluster
+        namespace: "{{ .namespace }}"
+      syncPolicy:
+        syncOptions:
+          - CreateNamespace=true
+  syncPolicy:
+    preserveResourcesOnDeletion: true
+#   templatePatch: |-

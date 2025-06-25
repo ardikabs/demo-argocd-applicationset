@@ -1,0 +1,46 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: stg-backend-app-1
+  namespace: argocd
+spec:
+  generators:
+    - list:
+        elements:
+          - values:
+              service_name: "foo"
+              service_namespace: "foo"
+          - values:
+              service_name: "bar"
+              service_namespace: "bar"
+          - values:
+              service_name: "foobar"
+              service_namespace: "foo"
+  template:
+    metadata:
+      name: "stg-backend-{{ values.service_name }}-1"
+    spec:
+      project: stg-backend-apps
+      source:
+        repoURL: https://gitlab.com/ardikabs/demo-argocd-applicationset.git
+        targetRevision: HEAD
+        path: "helm/{{values.service_name}}"
+        helm:
+          releaseName: "{{ values.service_name }}"
+          valueFiles:
+            - ../base/values.yaml
+            - values.stg.yaml
+            - .values.stg.yaml
+          parameters:
+            - name: eksCluster
+              value: "1"
+            - name: disableCronJob
+              value: "false"
+      destination:
+        name: in-cluster
+        namespace: "{{values.service_namespace}}"
+      syncPolicy:
+        syncOptions:
+          - CreateNamespace=true
+  syncPolicy:
+    preserveResourcesOnDeletion: true
