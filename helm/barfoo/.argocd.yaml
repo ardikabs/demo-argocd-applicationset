@@ -6,7 +6,7 @@ clusters:
       enabled: true
 
     stg:
-      enabled: true
+      enabled: false
 
     prd:
       enabled: false
