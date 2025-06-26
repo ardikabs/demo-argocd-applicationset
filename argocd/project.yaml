@@ -12,10 +12,6 @@ spec:
     - "git@github.com:ardikabs/demo-argocd-applicationset.git"
   destinations:
     - namespace: "*"
-      name: in-cluster
-      server: "https://kubernetes.default.svc"
-    - namespace: "*"
-      name: local-secondary
       server: "https://kubernetes.default.svc.cluster.local"
   clusterResourceWhitelist:
     - group: "*"

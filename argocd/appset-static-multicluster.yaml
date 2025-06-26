@@ -1,0 +1,107 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: stg-backend-app-static-multicluster
+  namespace: argocd
+spec:
+  syncPolicy:
+    preserveResourcesOnDeletion: true
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - matrix:
+        generators:
+          - matrix:
+              generators:
+                - list:
+                    elements:
+                      - cluster:
+                          name: stg-backend-eks-cluster-1
+                          prefix: "stg-backend"
+                          suffix: "1"
+                          disabled: false
+                      - cluster:
+                          name: stg-backend-eks-cluster-2
+                          prefix: "stg-backend"
+                          suffix: "2"
+                          disabled: false
+                - list:
+                    elements:
+                      - service:
+                          name: "foo"
+                          namespace: "foo"
+                      - service:
+                          name: "bar"
+                          namespace: "bar"
+                        values:
+                          helmParameters:
+                            - name: eksCluster
+                              value: "1"
+                            - name: disableCronJob
+                              value: "false"
+                          syncPolicy:
+                            automated:
+                              selfHeal: true
+                      - service:
+                          name: "foobar"
+                          namespace: "foo"
+                        values:
+                          # `exclude` field specifies key-value which key defines the cluster name,
+                          # and the value defines the decision whether to be excluded (true) or not (false)
+                          exclude:
+                            stg-backend-eks-cluster-1: false
+                            stg-backend-eks-cluster-2: true
+          - list:
+              elements:
+                - values:
+                    skip: '{{ dig "values" "exclude" .cluster.name false . }}'
+      selector:
+        matchExpressions:
+          - key: values.skip
+            operator: NotIn
+            values:
+              - "true"
+          - key: cluster.disabled
+            operator: NotIn
+            values:
+              - "true"
+  template:
+    metadata:
+      name: "{{ .cluster.prefix }}-{{ .service.name }}-{{ .cluster.suffix }}"
+      annotations:
+        applicationset/params: "{{ . | toJson }}"
+    spec:
+      project: stg-backend-apps
+      source:
+        repoURL: git@github.com:ardikabs/demo-argocd-applicationset.git
+        targetRevision: HEAD
+        path: "helm/{{ .service.name }}"
+        helm:
+          releaseName: "{{ .service.name }}"
+          valueFiles:
+            - ../base/values.yaml
+            - values.stg.yaml
+            - .values.stg.yaml
+          parameters: []
+      destination:
+        name: "{{ .cluster.name }}"
+        namespace: "{{ .service.namespace }}"
+      syncPolicy:
+        syncOptions:
+          - CreateNamespace=true
+  templatePatch: |-
+    spec:
+      # Placeholder
+      destination: {}
+
+      helm:
+        releaseName: "{{ .service.name }}"
+
+    {{- if (hasKey .values "helmParameters") }}
+        parameters: {{ .values.helmParameters | toJson }}
+    {{- end}}
+
+    {{- if (hasKey .values "syncPolicy") }}
+      syncPolicy: {{ .values.syncPolicy | toJson }}
+    {{- end }}
+

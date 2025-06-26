@@ -4,6 +4,8 @@ metadata:
   name: stg-backend-app-static
   namespace: argocd
 spec:
+  syncPolicy:
+    preserveResourcesOnDeletion: true
   generators:
     - list:
         elements:
@@ -42,5 +44,3 @@ spec:
       syncPolicy:
         syncOptions:
           - CreateNamespace=true
-  syncPolicy:
-    preserveResourcesOnDeletion: true

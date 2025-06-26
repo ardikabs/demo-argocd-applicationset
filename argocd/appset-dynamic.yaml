@@ -4,6 +4,8 @@ metadata:
   name: stg-backend-app-dynamic
   namespace: argocd
 spec:
+  syncPolicy:
+    preserveResourcesOnDeletion: true
   goTemplate: true
   goTemplateOptions: ["missingkey=error"]
   generators:
@@ -42,5 +44,3 @@ spec:
       syncPolicy:
         syncOptions:
           - CreateNamespace=true
-  syncPolicy:
-    preserveResourcesOnDeletion: true
