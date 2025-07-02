@@ -29,29 +29,57 @@ spec:
                           prefix: "stg-backend"
                           suffix: "1"
                           disabled: false
+                        values:
+                          # exclude - defines a blocklist mechanism; items listed here will be skipped.
+                          # this is mutually exclusive with `include`. If both are defined, `include` takes precedence.
+                          exclude: {}
+
+                          # include - defines an allowlist mechanism; only explicitly listed items will be included.
+                          # this is mutually exclusive with 'exclude'
+                          # Ideally used in a bootstrapping phase
+                          include: {}
+
                       - cluster:
                           name: stg-backend-eks-cluster-2
                           prefix: "stg-backend"
                           suffix: "2"
                           disabled: false
                         values:
-                          # `exclude` field specifies key-value which key defines the service name,
-                          # and the value defines the decision whether to be excluded (true) or not (false)
-                          exclude:
-                            foo: true
-                            barfoo: true
-                            bar: true
+                          # exclude - defines a blocklist mechanism; items listed here will be skipped.
+                          # this is mutually exclusive with `include`. If both are defined, `include` takes precedence.
+                          exclude: {}
+                          #   foo: true
+                          #   barfoo: true
+                          #   bar: true
+
+                          # include - defines an allowlist mechanism; only explicitly listed items will be included.
+                          # this is mutually exclusive with 'exclude'
+                          # Ideally used in a bootstrapping phase
+                          include: {}
+                          #   foo: true
+                          #   barfoo: true
+                          #   bar: true
           - list:
               elements:
                 - values:
                     skip: '{{ dig "values" "exclude" (index .path.segments 1) false . }}'
-
+                    keep: '{{ dig "values" "include" (index .path.segments 1) (empty .values.include) . }}'
       selector:
+        # For an Application to be generated, the following conditions must be met:
+        # - `values.skip` is not set to `true`: If true, the application creation is intentionally skipped.
+        # - `values.keep` is set to `true`: Explicitly marks the application for creation, regardless of other conditions.
+        # - `cluster.disabled` is not set to `true`: Ensures the target cluster is active and eligible for deployment.
         matchExpressions:
           - key: values.skip
             operator: NotIn
             values:
               - "true"
+
+          - key: values.keep
+            operator: In
+            values:
+              - "true"
+
           - key: cluster.disabled
             operator: NotIn
             values:
