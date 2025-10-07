@@ -1,0 +1,9 @@
+metadata:
+  enabled: true
+
+  namespace: bar
+
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

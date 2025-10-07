@@ -11,8 +11,12 @@ spec:
     - "https://github.com/ardikabs/demo-argocd-applicationset.git"
     - "git@github.com:ardikabs/demo-argocd-applicationset.git"
   destinations:
-    - namespace: "*"
-      server: "https://kubernetes.default.svc.cluster.local"
+    - name: in-cluster
+      namespace: "*"
+    - name: stg-backend-eks-cluster-1
+      namespace: "*"
+    - name: stg-backend-eks-cluster-2
+      namespace: "*"
   clusterResourceWhitelist:
     - group: "*"
       kind: "*"

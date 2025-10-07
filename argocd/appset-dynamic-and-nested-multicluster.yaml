@@ -1,0 +1,107 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: stg-backend-app-dynamic-and-nested-multicluster
+  namespace: argocd
+spec:
+  syncPolicy:
+    preserveResourcesOnDeletion: true
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - matrix:
+        generators:
+          - matrix:
+              generators:
+                - git:
+                    repoURL: git@github.com:ardikabs/demo-argocd-applicationset.git
+                    revision: HEAD
+                    files:
+                      - path: kustomize/*/*/stg/.argocd.yaml
+                - list:
+                    elements:
+                      - cluster:
+                          id: backend-1
+                          name: stg-backend-eks-cluster-1
+                          prefix: "stg-backend"
+                          suffix: "1"
+                          disabled: false
+                      - cluster:
+                          id: backend-2
+                          name: stg-backend-eks-cluster-2
+                          prefix: "stg-backend"
+                          suffix: "2"
+                          disabled: false
+          - list:
+              elements:
+                - values:
+                    skip: '{{ ne (dig "cluster" "id" "N/A" .) (index .path.segments 1) }}'
+      selector:
+        matchExpressions:
+          - key: cluster.disabled
+            operator: NotIn
+            values:
+              - "true"
+
+          - key: values.skip
+            operator: NotIn
+            values:
+              - "true"
+
+          - key: metadata.enabled
+            operator: In
+            values:
+              - "true"
+  template:
+    metadata:
+      name: "{{ .cluster.prefix }}-{{ index .path.segments 2 }}-{{ .cluster.suffix }}"
+      annotations:
+        applicationset/params: "{{ . | toJson }}"
+      labels:
+        platform.ardikabs.com/env: "staging"
+        platform.ardikabs.com/envAlias: "stg"
+        platform.ardikabs.com/cluster: "{{ .cluster.name }}"
+        platform.ardikabs.com/service: "{{ index .path.segments 2 }}"
+    spec:
+      project: stg-backend-apps
+      source:
+        repoURL: git@github.com:ardikabs/demo-argocd-applicationset.git
+        targetRevision: HEAD
+        path: "{{ .path.path }}"
+      destination:
+        name: "{{ .cluster.name }}"
+        namespace: default
+      syncPolicy:
+        syncOptions:
+          - CreateNamespace=true
+  templatePatch: |-
+    {{- $meta := .metadata }}
+
+    metadata:
+    {{- if hasKey $meta "annotations" }}
+      annotations: {{ $meta.annotations | toJson }}
+    {{- else }}
+      annotations: {}
+    {{- end }}
+
+    {{- if hasKey $meta "labels" }}
+      labels: {{ $meta.labels | toJson }}
+    {{- else }}
+      labels: {}
+    {{- end }}
+
+    spec:
+      destination:
+        {{- if (hasKey $meta "namespace") }}
+        namespace: {{ $meta.namespace }}
+        {{- else }}
+        namespace: "default"
+        {{- end }}
+
+      {{- if (hasKey $meta "syncPolicy") }}
+      syncPolicy: {{ $meta.syncPolicy | toJson }}
+      {{- end }}
+
+      {{- if (hasKey $meta "ignoreDifferences") }}
+      ignoreDifferences: {{ $meta.ignoreDifferences | toJson }}
+      {{- end }}

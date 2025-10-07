@@ -1,0 +1,43 @@
+metadata:
+  enabled: true
+
+  namespace: bar
+
+  labels:
+    platform.ardikabs.com/owner: infrateam
+
+  annotations:
+    custom.annotations.for.argocdapp: keyvalue
+
+    # sync options with annotation-based
+    argocd.argoproj.io/sync-options: PruneLast=true
+
+  # Reference syncPolicy allowed options
+  # auto sync: https://argo-cd.readthedocs.io/en/stable/user-guide/auto_sync/
+  # sync options: https://argo-cd.readthedocs.io/en/latest/user-guide/sync-options/
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
+      allowEmpty: true
+
+    syncOptions:
+      - CreateNamespace=true
+      - ApplyOutOfSyncOnly=true
+
+  # Reference ignoreDifferences allowed options
+  # https://argo-cd.readthedocs.io/en/stable/user-guide/diffing/
+  ignoreDifferences:
+    - group: networking.istio.io
+      kind: VirtualService
+      jqPathExpressions:
+        # ignore any changes to the vs.spec.http[*].match[*].headers
+        # which will help us to enable header-based canary through argo-rollouts
+        - .spec.http[]? | select(any(.match[]?; has("headers")))
+        # ignore the vs.spec.http[*].route[*] that has "weight" field
+        # as the field will be managed by argo-rollouts during canary deployment
+        - .spec.http[].route[]? | select(has("weight"))
+    - group: ""
+      kind: Service
+      jsonPointers:
+        - /spec/selector/rollouts-pod-template-hash
