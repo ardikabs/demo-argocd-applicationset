@@ -3,6 +3,8 @@ metadata:
 
   namespace: bar
 
+  cleanupOnDeletion: true
+
   labels:
     platform.ardikabs.com/owner: infrateam
 

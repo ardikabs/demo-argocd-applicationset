@@ -84,6 +84,12 @@ spec:
       annotations: {}
     {{- end }}
 
+    {{- if and (hasKey $meta "cleanupOnDeletion") ($meta.cleanupOnDeletion) }}
+      finalizers: ["resources-finalizer.argocd.argoproj.io"]
+    {{- else }}
+      finalizers: []
+    {{- end}}
+
     {{- if hasKey $meta "labels" }}
       labels: {{ $meta.labels | toJson }}
     {{- else }}
