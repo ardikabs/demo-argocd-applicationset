@@ -2,3 +2,9 @@ metadata:
   enabled: true
 
   namespace: foobar
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+
