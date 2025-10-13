@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: stg-backend-app-dynamic-multicluster
+  name: stg-backend-apps
   namespace: argocd
 spec:
   syncPolicy:
