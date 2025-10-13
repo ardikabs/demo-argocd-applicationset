@@ -1,2 +1,7 @@
 metadata:
   enabled: true
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
