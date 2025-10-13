@@ -8,8 +8,8 @@ metadata:
 spec:
   description: "All applications related to backend team for stg environment"
   sourceRepos:
-    - "https://github.com/ardikabs/demo-argocd-applicationset.git"
-    - "git@github.com:ardikabs/demo-argocd-applicationset.git"
+    - "https://github.com/ardikabs/argocd-applicationset-patterns.git"
+    - "git@github.com:ardikabs/argocd-applicationset-patterns.git"
   destinations:
     - name: in-cluster
       namespace: "*"

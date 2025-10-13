@@ -6,23 +6,27 @@ This repository demonstrates various ArgoCD ApplicationSet patterns for managing
 
 **Use Case**: Small to medium teams with a fixed set of services and predictable deployment requirements.
 
-### Characteristics:
+### Characteristics
+
 - **Teams**: 1-5 teams
 - **Services**: 5-20 services (fixed list)
 - **Environments**: Multiple environments (dev, staging, production)
 - **Clusters**: Single or small number of clusters
 - **Configuration**: Hardcoded service list in ApplicationSet spec
 
-### Implementation:
+### Implementation
+
 - Uses `list` generator with predefined service elements
 - Simple matrix combination of services and clusters
 - Direct path mapping to Helm charts
 
-### Example Files:
-- `.argocd/static/list.yaml` - Basic static list implementation
-- `helm/` directory - Individual service Helm charts
+### Example Files
 
-### When to Use:
+- [`.argocd/static/list.yaml`](.argocd/static/list.yaml) - Basic static list implementation
+- [`helm/`](./helm/) directory - Individual service Helm charts
+
+### When to Use
+
 - Small development teams
 - Stable service portfolio
 - Simple deployment requirements
@@ -34,24 +38,28 @@ This repository demonstrates various ArgoCD ApplicationSet patterns for managing
 
 **Use Case**: Organizations with multiple clusters but a fixed set of services requiring selective deployment.
 
-### Characteristics:
+### Characteristics
+
 - **Teams**: 1-5 teams
 - **Services**: 5-20 services (fixed list)
 - **Environments**: Multiple environments across clusters
 - **Clusters**: 2-5 clusters with selective deployment
 - **Configuration**: Service-specific cluster inclusion/exclusion rules
 
-### Implementation:
+### Implementation
+
 - Uses `matrix` generator combining `list` generators for clusters and services
 - Advanced selector logic with `exclude`/`include` mechanisms
 - Go template support for complex conditional logic
 - Template patching for service-specific configurations
 
-### Example Files:
-- `.argocd/static/multicluster-with-include-exclude.yaml` - Multi-cluster with selective deployment
+### Example Files
+
+- [`.argocd/static/multicluster-with-include-exclude.yaml`](.argocd/static/multicluster-with-include-exclude.yaml) - Multi-cluster with selective deployment
 - Service-specific Helm parameters and sync policies
 
-### When to Use:
+### When to Use
+
 - Multi-cluster environments
 - Services with different cluster requirements
 - Need for selective deployment control
@@ -63,25 +71,29 @@ This repository demonstrates various ArgoCD ApplicationSet patterns for managing
 
 **Use Case**: Growing organizations with many services that need automatic discovery and deployment.
 
-### Characteristics:
+### Characteristics
+
 - **Teams**: 5-20 teams
 - **Services**: 20-100+ services (auto-discovered)
 - **Environments**: Multiple environments
 - **Clusters**: Multiple clusters with dynamic selection
 - **Configuration**: Git-based service discovery with runtime configuration
 
-### Implementation:
+### Implementation
+
 - Uses `git` generator to discover services from repository structure
-- Runtime configuration files (e.g., `runtime/stg-backend.yaml`)
+- Runtime configuration files (e.g., [`runtime/stg-backend.yaml`](./runtime/stg-backend.yaml))
 - Dynamic cluster selection with include/exclude mechanisms
 - Advanced selector logic for deployment control
 
-### Example Files:
-- `.argocd/dynamic/multicluster-wiith-include-exclude.yaml` - Git-based discovery with cluster selection
-- `.argocd/dynamic/remote-source.yaml` - Runtime configuration-based deployment
-- `runtime/stg-backend.yaml` - Service configuration file
+### Example Files
 
-### When to Use:
+- [`.argocd/dynamic/multicluster-wiith-include-exclude.yaml`](.argocd/dynamic/multicluster-wiith-include-exclude.yaml) - Git-based discovery with cluster selection
+- [`.argocd/dynamic/remote-source.yaml`](.argocd/dynamic/remote-source.yaml) - Runtime configuration-based deployment
+- [`runtime/stg-backend.yaml`](runtime/stg-backend.yaml) - Service configuration file
+
+### When to Use
+
 - Large number of services
 - Frequent service additions/removals
 - Need for automatic service discovery
@@ -93,26 +105,30 @@ This repository demonstrates various ArgoCD ApplicationSet patterns for managing
 
 **Use Case**: Complex organizations requiring fine-grained control over individual service deployments with service-specific configurations.
 
-### Characteristics:
+### Characteristics
+
 - **Teams**: 10-50+ teams
 - **Services**: 50-200+ services
 - **Environments**: Multiple environments with complex requirements
 - **Clusters**: Multiple clusters with sophisticated routing
 - **Configuration**: Service-specific `.argocd.yaml` files with metadata-driven deployment
 
-### Implementation:
+### Implementation
+
 - Uses `git` generator to discover `.argocd.yaml` files
 - Service-specific configuration files (`.argocd.yaml`)
 - Metadata-driven deployment with template patching
 - Advanced cluster selection based on service metadata
 - Support for service-specific sync policies, labels, and annotations
 
-### Example Files:
-- `.argocd/dynamic/multicluster-with-cluster-selection.yaml` - Cluster selection based on service metadata
-- `helm/*/.argocd.yaml` - Service-specific configuration files
-- `kustomize/*/*/stg/.argocd.yaml` - Environment-specific service configurations
+### Example Files
 
-### When to Use:
+- [`.argocd/dynamic/multicluster-with-cluster-selection.yaml`](.argocd/dynamic/multicluster-with-cluster-selection.yaml) - Cluster selection based on service metadata
+- [`helm/*/.argocd.yaml`](helm/) - Service-specific configuration files
+- [`kustomize/*/*/stg/.argocd.yaml`](kustomize/) - Environment-specific service configurations
+
+### When to Use
+
 - Large, complex organizations
 - Services with unique deployment requirements
 - Need for fine-grained deployment control
@@ -125,25 +141,29 @@ This repository demonstrates various ArgoCD ApplicationSet patterns for managing
 
 **Use Case**: Organizations using both Kustomize and Helm for different types of applications.
 
-### Characteristics:
+### Characteristics
+
 - **Teams**: 5-30 teams
 - **Services**: 20-100 services (mixed Kustomize/Helm)
 - **Environments**: Multiple environments
 - **Clusters**: Multiple clusters
 - **Configuration**: Mixed deployment strategies with unified management
 
-### Implementation:
+### Implementation
+
 - Supports both Helm charts and Kustomize overlays
 - Service-specific configuration files for both deployment types
 - Unified ApplicationSet managing different deployment strategies
 - Environment-specific overlays and values
 
-### Example Files:
-- `helm/` directory - Helm-based services
-- `kustomize/` directory - Kustomize-based services
+### Example Files
+
+- [`helm/`](helm/) directory - Helm-based services
+- [`kustomize/`](kustomize/) directory - Kustomize-based services
 - Mixed `.argocd.yaml` configurations
 
-### When to Use:
+### When to Use
+
 - Mixed deployment strategies
 - Legacy applications alongside new services
 - Different teams using different tools

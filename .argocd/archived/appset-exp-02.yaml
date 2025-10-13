@@ -12,12 +12,12 @@ spec:
     - matrix:
         generators:
           - git:
-              repoURL: git@github.com:ardikabs/demo-argocd-applicationset.git
+              repoURL: git@github.com:ardikabs/argocd-applicationset-patterns.git
               revision: HEAD
               files:
                 - path: helm/*/.argocd.yaml
           - git:
-              repoURL: git@github.com:ardikabs/demo-argocd-applicationset.git
+              repoURL: git@github.com:ardikabs/argocd-applicationset-patterns.git
               revision: HEAD
               files:
                 - path: helm/defaults.yaml
@@ -33,7 +33,7 @@ spec:
     spec:
       project: stg-backend-apps
       source:
-        repoURL: git@github.com:ardikabs/demo-argocd-applicationset.git
+        repoURL: git@github.com:ardikabs/argocd-applicationset-patterns.git
         targetRevision: HEAD
         path: "helm/{{ index .path.segments 1 }}"
         helm:

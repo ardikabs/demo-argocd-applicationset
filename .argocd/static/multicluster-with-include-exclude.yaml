@@ -73,7 +73,7 @@ spec:
     spec:
       project: stg-backend-apps
       source:
-        repoURL: git@github.com:ardikabs/demo-argocd-applicationset.git
+        repoURL: git@github.com:ardikabs/argocd-applicationset-patterns.git
         targetRevision: HEAD
         path: "helm/{{ .service.name }}"
         helm:
