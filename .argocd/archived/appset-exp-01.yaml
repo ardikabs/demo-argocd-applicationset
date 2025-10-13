@@ -41,10 +41,10 @@ spec:
     metadata:
       name: "{{ .values.envName }}-{{ .values.domainName }}-{{ index .path.segments 1 }}-{{ .values.clusterSuffix }}"
       labels:
-        systems.superbank.io/service: "{{ index .path.segments 1 }}"
-        systems.superbank.io/cluster: "{{ .values.clusterName }}"
-        systems.superbank.io/env: "{{ .values.envName }}"
-        systems.superbank.io/domain: "{{ .values.domainName }}"
+        systems.ardikabs.com/service: "{{ index .path.segments 1 }}"
+        systems.ardikabs.com/cluster: "{{ .values.clusterName }}"
+        systems.ardikabs.com/env: "{{ .values.envName }}"
+        systems.ardikabs.com/domain: "{{ .values.domainName }}"
       namespace: argocd
     spec:
       project: stg-backend-apps

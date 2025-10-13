@@ -28,7 +28,7 @@ spec:
     metadata:
       name: "stg-backend-{{ index .path.segments 1 }}-1"
       labels:
-        systems.superbank.io/service: "{{ index .path.segments 1 }}"
+        systems.ardikabs.com/service: "{{ index .path.segments 1 }}"
       namespace: argocd
     spec:
       project: stg-backend-apps

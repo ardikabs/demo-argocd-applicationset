@@ -16,11 +16,13 @@ spec:
                 - list:
                     elements:
                       - cluster:
+                          id: "backend-1"
                           name: stg-backend-eks-cluster-1
                           prefix: "stg-backend"
                           suffix: "1"
                           disabled: false
                       - cluster:
+                          id: "backend-2"
                           name: stg-backend-eks-cluster-2
                           prefix: "stg-backend"
                           suffix: "2"
@@ -46,15 +48,15 @@ spec:
                           name: "foobar"
                           namespace: "foo"
                         values:
-                          # `exclude` field specifies key-value which key defines the cluster name,
+                          # `exclude` field specifies key-value which key defines the cluster ID,
                           # and the value defines the decision whether to be excluded (true) or not (false)
                           exclude:
-                            stg-backend-eks-cluster-1: false
-                            stg-backend-eks-cluster-2: true
+                            backend-1: false
+                            backend-2: true
           - list:
               elements:
                 - values:
-                    skip: '{{ dig "values" "exclude" .cluster.name false . }}'
+                    skip: '{{ dig "values" "exclude" .cluster.id false . }}'
       selector:
         matchExpressions:
           - key: values.skip
