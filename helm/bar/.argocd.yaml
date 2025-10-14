@@ -1,9 +1,14 @@
 namespace: bar
 
-clusters:
+deployments:
   backend:
-    dev:
+    devel:
       enabled: true
+      helm:
+        valueFiles:
+          - .values.devel.yaml
+          - values.devel.yaml
+
 
     stg:
       enabled: true
@@ -12,10 +17,6 @@ clusters:
         valueFiles:
           - .values.stg.yaml
           - values.stg.yaml
-
-        parameters:
-          - name: disableCronJob
-            value: "true"
 
     prd:
       enabled: false

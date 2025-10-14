@@ -1,0 +1,77 @@
+# globals represents the global values for all services and clusters
+# currently supported values are:
+# - ignoreDifferences: as specified in the argocd documentation
+globals:
+  ignoreDifferences:
+    - group: networking.istio.io
+      kind: VirtualService
+      jqPathExpressions:
+        # ignore any changes to the vs.spec.http[*].match[*].headers
+        # which will help us to enable header-based canary through argo-rollouts
+        - .spec.http[]? | select(any(.match[]?; has("headers")))
+        # ignore the vs.spec.http[*].route[*] that has "weight" field
+        # as the field will be managed by argo-rollouts during canary deployment
+        - .spec.http[].route[]? | select(has("weight"))
+    - group: ""
+      kind: Service
+      jsonPointers:
+        - /spec/selector/rollouts-pod-template-hash
+
+# clusters represents the clusters where the service is deployed
+# this is used to define the cluster-specific values for the service
+# currently supported values are:
+# - helm definitions (specifically `parameters`)
+clusters:
+  in-cluster:
+    helm:
+      parameters:
+        - name: clusterID
+          value: "1"
+
+# defaults represents the default values for all environments (as specified), regardless of the service and cluster location
+# this is used as a fallback when a service does not have its own values
+# currently supported values are:
+# - helm definitions (specifically `valueFiles` and `parameters`)
+# - syncPolicy definitions: as specified in the argocd documentation
+defaults:
+  environments:
+    devel:
+      helm:
+        valueFiles:
+          - ../base/values.yaml
+          - values.devel.yaml
+          - .values.devel.yaml
+
+        parameters: []
+
+      syncPolicy:
+        automated:
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+
+
+    stg:
+      helm:
+        valueFiles:
+          - ../base/values.yaml
+          - values.stg.yaml
+          - .values.stg.yaml
+
+        parameters: []
+
+      syncPolicy:
+        syncOptions:
+          - CreateNamespace=true
+
+    prd:
+      helm:
+        valueFiles:
+          - ../base/values.yaml
+          - values.prd.yaml
+          - .values.prd.yaml
+        parameters: []
+
+      syncPolicy:
+        syncOptions:
+          - CreateNamespace=true

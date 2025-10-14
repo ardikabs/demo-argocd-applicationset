@@ -1,8 +1,8 @@
 namespace: foobar
 
-clusters:
+deployments:
   backend:
-    dev:
+    devel:
       enabled: true
 
     stg:

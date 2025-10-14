@@ -11,40 +11,26 @@ spec:
   generators:
     - matrix:
         generators:
-          - matrix:
-              generators:
-                - git:
-                    repoURL: git@github.com:ardikabs/argocd-applicationset-patterns.git
-                    revision: HEAD
-                    files:
-                      - path: helm/*/.argocd.yaml
-                    values:
-                      envName: "stg"
-                      domainName: "backend"
-                - clusters:
-                    selector:
-                      matchLabels:
-                        env: "{{ .values.envName }}"
-                        domain: "{{ .values.domainName }}"
           - git:
               repoURL: git@github.com:ardikabs/argocd-applicationset-patterns.git
               revision: HEAD
               files:
-                - path: helm/defaults.yaml
-              values:
-                clusterName: "{{ .name }}"
-                clusterSuffix: '{{ index .metadata.labels "cluster/suffix" }}'
+                - path: helm/*/.argocd.yaml
+          - git:
+              repoURL: git@github.com:ardikabs/argocd-applicationset-patterns.git
+              revision: HEAD
+              files:
+                - path: helm/runtimes.yaml
       selector:
         matchLabels:
-          clusters.backend.stg.enabled: "true"
+          domains.backend.stg.enabled: "true"
   template:
     metadata:
-      name: "{{ .values.envName }}-{{ .values.domainName }}-{{ index .path.segments 1 }}-{{ .values.clusterSuffix }}"
+      name: "stg-backend-{{ index .path.segments 1 }}-1"
+      annotations:
+        applicationset/params: "{{ . | toJson }}"
       labels:
         systems.ardikabs.com/service: "{{ index .path.segments 1 }}"
-        systems.ardikabs.com/cluster: "{{ .values.clusterName }}"
-        systems.ardikabs.com/env: "{{ .values.envName }}"
-        systems.ardikabs.com/domain: "{{ .values.domainName }}"
       namespace: argocd
     spec:
       project: stg-backend-apps
@@ -57,13 +43,13 @@ spec:
           valueFiles: []
           parameters: []
       destination:
-        name: "{{ .values.clusterName }}"
+        name: in-cluster
         namespace: "{{ .namespace }}"
       syncPolicy: {}
       ignoreDifferences: []
   templatePatch: |-
-    {{- $defVal := .defaults.clusters.stg }}
-    {{- $meta := .clusters.backend.stg }}
+    {{- $defVal := .defaults.environments.stg }}
+    {{- $meta := .domains.backend.stg }}
 
     spec:
       source:

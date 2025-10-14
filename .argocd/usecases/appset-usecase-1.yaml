@@ -1,0 +1,88 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: stg-backend-apps
+  namespace: argocd
+spec:
+  syncPolicy:
+    preserveResourcesOnDeletion: true
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - matrix:
+        generators:
+          - matrix:
+              generators:
+                - git:
+                    repoURL: git@github.com:ardikabs/argocd-applicationset-patterns.git
+                    revision: HEAD
+                    files:
+                      - path: helm/*/.argocd.yaml
+                    values:
+                      environment: "stg"
+                      domain: "backend"
+                - clusters:
+                    selector:
+                      matchLabels:
+                        env: "{{ .values.environment }}"
+                        domain: "{{ .values.domain }}"
+          - git:
+              repoURL: git@github.com:ardikabs/argocd-applicationset-patterns.git
+              revision: HEAD
+              files:
+                - path: helm/runtimes.yaml
+              values:
+                clusterName: "{{ .name }}"
+                clusterSuffix: '{{ index .metadata.labels "cluster/suffix" }}'
+      selector:
+        matchLabels:
+          domains.backend.stg.enabled: "true"
+  template:
+    metadata:
+      name: "{{ .values.environment }}-{{ .values.domain }}-{{ index .path.segments 1 }}-{{ .values.clusterSuffix }}"
+      annotations:
+        applicationset/params: "{{ . | toJson }}"
+      labels:
+        systems.ardikabs.com/service: "{{ index .path.segments 1 }}"
+        systems.ardikabs.com/cluster: "{{ .values.clusterName }}"
+        systems.ardikabs.com/env: "{{ .values.environment }}"
+        systems.ardikabs.com/domain: "{{ .values.domain }}"
+      namespace: argocd
+    spec:
+      project: stg-backend-apps
+      source:
+        repoURL: git@github.com:ardikabs/argocd-applicationset-patterns.git
+        targetRevision: HEAD
+        path: "helm/{{ index .path.segments 1 }}"
+        helm:
+          releaseName: "{{ index .path.segments 1 }}"
+      destination:
+        name: "{{ .values.clusterName }}"
+        namespace: "{{ .namespace }}"
+      syncPolicy: {}
+      ignoreDifferences: []
+  templatePatch: |-
+    {{- $globals := .globals }}
+    {{- $defVal := dig .values.environment dict .defaults.environments }}
+    {{- $runtime := dig .values.clusterName dict .clusters }}
+    {{- $svc := dig .values.clusterName .values.environment dict .deployments }}
+
+    spec:
+      source:
+        helm:
+          valueFiles:
+          {{- range $valueFile := default $defVal.helm.valueFiles (and (hasKey $svc "helm") $svc.helm.valueFiles) | default (list) }}
+            - {{ $valueFile | toJson }}
+          {{- end }}
+
+          {{- $helmParameters := and (hasKey $runtime "helm") $runtime.helm.parameters | default (list) }}
+          {{- $svcHelmParameters := and (hasKey $svc "helm") $svc.helm.parameters | default ($defVal.helm.parameters) }}
+          {{- $helmParameters := concat $helmParameters $svcHelmParameters }}
+          parameters: {{ $helmParameters | toJson }}
+
+      {{- $svcSyncPolicy := and (hasKey $svc "syncPolicy") $svc.syncPolicy | default (dict) }}
+      syncPolicy: {{ default $defVal.syncPolicy $svcSyncPolicy | toJson }}
+
+      {{- $svcIgnoreDifferences := and (hasKey $svc "ignoreDifferences") $svc.ignoreDifferences | default (list) }}
+      {{- $ignoreDifferences := concat $globals.ignoreDifferences $svcIgnoreDifferences }}
+      ignoreDifferences: {{ $ignoreDifferences | toJson }}
