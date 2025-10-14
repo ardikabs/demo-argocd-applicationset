@@ -1,6 +1,6 @@
 # Use Case
 
-ApplicationSet: [.argocd/usecases/appset-usecase-1.yaml](.argocd/usecases/appset-usecase-1.yaml)
+ApplicationSet: [.argocd/usecases/appset-usecase-1.yaml](appset-usecase-1.yaml)
 
 ## Premises
 

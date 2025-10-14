@@ -34,9 +34,13 @@ spec:
               values:
                 clusterName: "{{ .name }}"
                 clusterSuffix: '{{ index .metadata.labels "cluster/suffix" }}'
+                enabled: '{{ dig .values.domain .values.environment "enabled" false .deployments | default false }}'
       selector:
-        matchLabels:
-          domains.backend.stg.enabled: "true"
+        matchExpressions:
+          - key: deployments.backend.stg.enabled
+            operator: In
+            values:
+              - "true"
   template:
     metadata:
       name: "{{ .values.environment }}-{{ .values.domain }}-{{ index .path.segments 1 }}-{{ .values.clusterSuffix }}"
@@ -59,30 +63,23 @@ spec:
       destination:
         name: "{{ .values.clusterName }}"
         namespace: "{{ .namespace }}"
-      syncPolicy: {}
-      ignoreDifferences: []
   templatePatch: |-
     {{- $globals := .globals }}
     {{- $defVal := dig .values.environment dict .defaults.environments }}
     {{- $runtime := dig .values.clusterName dict .clusters }}
-    {{- $svc := dig .values.clusterName .values.environment dict .deployments }}
+    {{- $svc := dig .values.domain .values.environment dict .deployments }}
 
     spec:
       source:
         helm:
-          valueFiles:
-          {{- range $valueFile := default $defVal.helm.valueFiles (and (hasKey $svc "helm") $svc.helm.valueFiles) | default (list) }}
-            - {{ $valueFile | toJson }}
-          {{- end }}
+          valueFiles: {{ default $defVal.helm.valueFiles (dig "helm" "valueFiles" list $svc) | toJson }}
 
-          {{- $helmParameters := and (hasKey $runtime "helm") $runtime.helm.parameters | default (list) }}
-          {{- $svcHelmParameters := and (hasKey $svc "helm") $svc.helm.parameters | default ($defVal.helm.parameters) }}
-          {{- $helmParameters := concat $helmParameters $svcHelmParameters }}
-          parameters: {{ $helmParameters | toJson }}
+          {{- $runtimeHelmParameters := dig "helm" "parameters" list $runtime }}
+          {{- $svcHelmParameters := dig "helm" "parameters" list $svc }}
+          parameters: {{ concat $runtimeHelmParameters $svcHelmParameters | toJson }}
 
-      {{- $svcSyncPolicy := and (hasKey $svc "syncPolicy") $svc.syncPolicy | default (dict) }}
-      syncPolicy: {{ default $defVal.syncPolicy $svcSyncPolicy | toJson }}
+      syncPolicy: {{ default $defVal.syncPolicy (dig "syncPolicy" dict $svc) | toJson }}
 
-      {{- $svcIgnoreDifferences := and (hasKey $svc "ignoreDifferences") $svc.ignoreDifferences | default (list) }}
+      {{- $svcIgnoreDifferences := dig "ignoreDifferences" list $svc }}
       {{- $ignoreDifferences := concat $globals.ignoreDifferences $svcIgnoreDifferences }}
       ignoreDifferences: {{ $ignoreDifferences | toJson }}

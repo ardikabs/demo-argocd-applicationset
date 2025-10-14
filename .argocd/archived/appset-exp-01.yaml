@@ -54,16 +54,9 @@ spec:
     spec:
       source:
         helm:
-          valueFiles:
-          {{- range $valueFile := default $defVal.helm.valueFiles (and (hasKey $meta "helm") $meta.helm.valueFiles) | default (list) }}
-            - {{ $valueFile | toJson }}
-          {{- end }}
-          {{- if and (hasKey $meta "helm") $meta.helm.parameters }}
-          parameters: {{ $meta.helm.parameters | toJson }}
-          {{- end }}
+          valueFiles: {{ default $defVal.helm.valueFiles (dig "helm" "valueFiles" list $svc) | toJson }}
+          parameters: {{ dig "helm" "parameters" list $meta | toJson }}
 
-      {{- $metaSyncPolicy := and (hasKey $meta "syncPolicy") $meta.syncPolicy | default (dict) }}
-      syncPolicy: {{ default $defVal.syncPolicy $metaSyncPolicy | toJson }}
+      syncPolicy: {{ default $defVal.syncPolicy (dig "syncPolicy" dict $meta) | toJson }}
 
-      {{- $metaIgnoreDifferences := and (hasKey $meta "ignoreDifferences") $meta.ignoreDifferences | default (list) }}
-      ignoreDifferences: {{ concat $defVal.ignoreDifferences $metaIgnoreDifferences | toJson }}
+      ignoreDifferences: {{ concat $defVal.ignoreDifferences (dig "ignoreDifferences" list $meta) | toJson }}

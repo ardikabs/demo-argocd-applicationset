@@ -98,16 +98,16 @@ spec:
 
     spec:
       destination:
-        {{- if (hasKey $meta "namespace") }}
+        {{- if hasKey $meta "namespace" }}
         namespace: {{ $meta.namespace }}
         {{- else }}
         namespace: "default"
         {{- end }}
 
-      {{- if (hasKey $meta "syncPolicy") }}
+      {{- if hasKey $meta "syncPolicy" }}
       syncPolicy: {{ $meta.syncPolicy | toJson }}
       {{- end }}
 
-      {{- if (hasKey $meta "ignoreDifferences") }}
+      {{- if hasKey $meta "ignoreDifferences" }}
       ignoreDifferences: {{ $meta.ignoreDifferences | toJson }}
       {{- end }}

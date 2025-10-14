@@ -192,3 +192,7 @@ This repository demonstrates various ArgoCD ApplicationSet patterns for managing
 5. **Graduate to more complex patterns** as your organization grows
 
 Each pattern builds upon the previous ones, allowing for gradual adoption and complexity management as your GitOps practices mature.
+
+## Last but not Least
+
+If you prefer premises that are more use case–oriented, refer to the [usecases](.argocd/usecases/) collection.
