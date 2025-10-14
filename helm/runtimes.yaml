@@ -22,11 +22,17 @@ globals:
 # currently supported values are:
 # - helm definitions (specifically `parameters`)
 clusters:
-  in-cluster:
+  stg-backend-eks-cluster-1:
     helm:
       parameters:
         - name: clusterID
           value: "1"
+
+  stg-backend-eks-cluster-2:
+    helm:
+      parameters:
+        - name: clusterID
+          value: "2"
 
 # defaults represents the default values for all environments (as specified), regardless of the service and cluster location
 # this is used as a fallback when a service does not have its own values

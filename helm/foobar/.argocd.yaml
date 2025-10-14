@@ -16,3 +16,6 @@ deployments:
 
     prd:
       enabled: false
+
+clusterExclusions:
+  stg-backend-eks-cluster-2: true

@@ -24,26 +24,45 @@ spec:
                 - clusters:
                     selector:
                       matchLabels:
-                        env: "{{ .values.environment }}"
-                        domain: "{{ .values.domain }}"
-          - git:
-              repoURL: git@github.com:ardikabs/argocd-applicationset-patterns.git
-              revision: HEAD
-              files:
-                - path: helm/runtimes.yaml
-              values:
-                clusterName: "{{ .name }}"
-                clusterSuffix: '{{ index .metadata.labels "cluster/suffix" }}'
-                enabled: '{{ dig .values.domain .values.environment "enabled" false .deployments | default false }}'
+                        cluster/env: "{{ .values.environment }}"
+                        cluster/domain: "{{ .values.domain }}"
+          - matrix:
+              generators:
+                - git:
+                    repoURL: git@github.com:ardikabs/argocd-applicationset-patterns.git
+                    revision: HEAD
+                    files:
+                      - path: helm/runtimes.yaml
+                # this `list` generator is used as a control mechanism as well as value shortcuts
+                # control mechanism:
+                # - if the `enabled` field is set to `true`, the application will be enabled as in allow to be deployed for the given domain and environment
+                # - if the `excluded` field is set to `true`, the application will be excluded from the deployment for the target cluster
+                # value shortcuts:
+                # - `clusterName`: the name of the cluster
+                # - `clusterPrefix`: the prefix of the cluster
+                # - `clusterSuffix`: the suffix of the cluster
+                - list:
+                    elements:
+                      - values:
+                          clusterName: "{{ .name }}"
+                          clusterPrefix: '{{ index .metadata.labels "cluster/prefix" }}'
+                          clusterSuffix: '{{ index .metadata.labels "cluster/suffix" }}'
+                          enabled: '{{ dig .values.domain .values.environment "enabled" false .deployments }}'
+                          excluded: '{{ dig "clusterExclusions" .name false . }}'
       selector:
         matchExpressions:
-          - key: deployments.backend.stg.enabled
+          - key: values.excluded
+            operator: NotIn
+            values:
+              - "true"
+
+          - key: values.enabled
             operator: In
             values:
               - "true"
   template:
     metadata:
-      name: "{{ .values.environment }}-{{ .values.domain }}-{{ index .path.segments 1 }}-{{ .values.clusterSuffix }}"
+      name: "{{ .values.clusterPrefix }}-{{ index .path.segments 1 }}-{{ .values.clusterSuffix }}"
       annotations:
         applicationset/params: "{{ . | toJson }}"
       labels:
