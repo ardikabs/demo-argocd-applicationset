@@ -75,39 +75,39 @@ spec:
         syncOptions:
           - CreateNamespace=true
   templatePatch: |-
-    {{- $meta := .metadata }}
+    {{- $argocd := .argocd }}
 
     metadata:
-    {{- if hasKey $meta "annotations" }}
-      annotations: {{ $meta.annotations | toJson }}
+    {{- if hasKey $argocd "annotations" }}
+      annotations: {{ $argocd.annotations | toJson }}
     {{- else }}
       annotations: {}
     {{- end }}
 
-    {{- if and (hasKey $meta "cleanupOnDeletion") ($meta.cleanupOnDeletion) }}
+    {{- if and (hasKey $argocd "cleanupOnDeletion") ($argocd.cleanupOnDeletion) }}
       finalizers: ["resources-finalizer.argocd.argoproj.io"]
     {{- else }}
       finalizers: []
     {{- end}}
 
-    {{- if hasKey $meta "labels" }}
-      labels: {{ $meta.labels | toJson }}
+    {{- if hasKey $argocd "labels" }}
+      labels: {{ $argocd.labels | toJson }}
     {{- else }}
       labels: {}
     {{- end }}
 
     spec:
       destination:
-        {{- if hasKey $meta "namespace" }}
-        namespace: {{ $meta.namespace }}
+        {{- if hasKey $argocd "namespace" }}
+        namespace: {{ $argocd.namespace }}
         {{- else }}
         namespace: "default"
         {{- end }}
 
-      {{- if hasKey $meta "syncPolicy" }}
-      syncPolicy: {{ $meta.syncPolicy | toJson }}
+      {{- if hasKey $argocd "syncPolicy" }}
+      syncPolicy: {{ $argocd.syncPolicy | toJson }}
       {{- end }}
 
-      {{- if hasKey $meta "ignoreDifferences" }}
-      ignoreDifferences: {{ $meta.ignoreDifferences | toJson }}
+      {{- if hasKey $argocd "ignoreDifferences" }}
+      ignoreDifferences: {{ $argocd.ignoreDifferences | toJson }}
       {{- end }}

@@ -1,4 +1,4 @@
-metadata:
+argocd:
   enabled: true
 
   syncPolicy:

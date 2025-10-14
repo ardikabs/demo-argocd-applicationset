@@ -1,0 +1,66 @@
+# Target namespace for application deployment
+# All applications will be deployed to this namespace regardless of domain/environment
+namespace: NAMESPACE
+
+# Deployment configuration for different domains and environments
+# Structure: deployments -> DOMAIN_ID -> ENVIRONMENT_ID -> configuration
+deployments:
+  DOMAIN_ID:  # e.g., "backend", "frontend", "data"
+    ENVIRONMENT_ID:  # e.g., "devel", "stg", "prd"
+      # Whether this service allowed to be deployed for this domain and environment combination
+      # If false, the service will be completely excluded from deployment
+      enabled: true
+
+      # Custom labels to be applied to the ArgoCD Application resource
+      labels:
+        custom.labels.for.argocdapp: labelvalue
+
+      # Custom annotations to be applied to the ArgoCD Application resource
+      annotations:
+        custom.annotations.for.argocdapp: annotationvalue
+
+      # Whether to clean up resources when the application is deleted (as indicated in `enabled` field)
+      cleanupOnDeletion: true
+
+      # Helm-specific configuration
+      helm:
+        # List of values files to be used (in order of precedence)
+        # Files are loaded in the order specified, with later files overriding earlier ones
+        valueFiles:
+          - .values.stg.yaml
+          - values.stg.yaml
+
+        # Helm parameters to be passed to the chart
+        parameters:
+          - name: myKey
+            value: "myValue"
+
+      # ArgoCD sync policy configuration
+      syncPolicy:
+        # Enable automated sync with self-healing
+        # Reference https://argo-cd.readthedocs.io/en/stable/user-guide/auto_sync/
+        automated:
+          selfHeal: true
+
+        # Additional sync options
+        # Reference https://argo-cd.readthedocs.io/en/latest/user-guide/sync-options/
+        syncOptions:
+          - CreateNamespace=true  # Create namespace if it doesn't exist
+          - ServerSideApply=true  # Use server-side apply for better conflict resolution
+
+      # Resources and fields to ignore during sync (useful for external modifications)
+      # Reference https://argo-cd.readthedocs.io/en/stable/user-guide/diffing/
+      ignoreDifferences:
+        - group: networking.istio.io
+          kind: VirtualService
+          jsonPointers:
+            - /spec/http[*].match[*].headers
+          jqPathExpressions:
+            - .spec.http[*].match[*].headers
+
+# Cluster exclusion list - clusters listed here will be excluded from deployment
+# This provides cluster-level control over which clusters can deploy this service
+# Format: CLUSTER_NAME: true (to exclude) or false (to allow),
+# by defaults leaving this field empty will allow the service to be deployed to all clusters
+clusterExclusions:
+  CLUSTER_NAME: true  # This cluster will be excluded from deploying this service

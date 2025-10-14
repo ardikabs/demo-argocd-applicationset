@@ -34,10 +34,15 @@ spec:
                     files:
                       - path: helm/runtimes.yaml
                 # this `list` generator is used as a control mechanism as well as value shortcuts
-                # control mechanism:
-                # - if the `enabled` field is set to `true`, the application will be enabled as in allow to be deployed for the given domain and environment
-                # - if the `excluded` field is set to `true`, the application will be excluded from the deployment for the target cluster
-                # value shortcuts:
+                # Control Mechanism:
+                # - `active`: it indicates if the application is allowed to be deployed to the destination cluster associated with the given domain and environment,
+                #             this value is computed by checking from `.argocd.yaml` file:
+                #             - the `deployments.<domain>.<environment>.enabled` field: Specifies whether the application is allowed to be deployed for the given domain and environment.
+                #             - the `clusterExclusions.<clusterName>` field: Defines if the destination cluster is excluded from deploying the application.
+                #             In essence, the `deployments` field describes the overall deployment context of the application regardless of its logical clusters for the specified domain and environment.
+                #             Meanwhile, `clusterExclusions` provides exceptions where the application is intentionally not deployed to certain clusters yet.
+                #             Ideally, the application should be deployed to all destination clusters associated with the given domain and environment.
+                # Value Shortcuts:
                 # - `clusterName`: the name of the cluster
                 # - `clusterPrefix`: the prefix of the cluster
                 # - `clusterSuffix`: the suffix of the cluster
@@ -47,16 +52,10 @@ spec:
                           clusterName: "{{ .name }}"
                           clusterPrefix: '{{ index .metadata.labels "cluster/prefix" }}'
                           clusterSuffix: '{{ index .metadata.labels "cluster/suffix" }}'
-                          enabled: '{{ dig .values.domain .values.environment "enabled" false .deployments }}'
-                          excluded: '{{ dig "clusterExclusions" .name false . }}'
+                          active: '{{ and (dig .values.domain .values.environment "enabled" false .deployments) (not (dig "clusterExclusions" .name false .)) }}'
       selector:
         matchExpressions:
-          - key: values.excluded
-            operator: NotIn
-            values:
-              - "true"
-
-          - key: values.enabled
+          - key: values.active
             operator: In
             values:
               - "true"
@@ -86,19 +85,38 @@ spec:
     {{- $globals := .globals }}
     {{- $defVal := dig .values.environment dict .defaults.environments }}
     {{- $runtime := dig .values.clusterName dict .clusters }}
-    {{- $svc := dig .values.domain .values.environment dict .deployments }}
+    {{- $app := dig .values.domain .values.environment dict .deployments }}
+
+    metadata:
+    {{- if hasKey $app "annotations" }}
+      annotations: {{ $app.annotations | toJson }}
+    {{- else }}
+      annotations: {}
+    {{- end }}
+
+    {{- if and (hasKey $app "cleanupOnDeletion") ($app.cleanupOnDeletion) }}
+      finalizers: ["resources-finalizer.argocd.argoproj.io"]
+    {{- else }}
+      finalizers: []
+    {{- end}}
+
+    {{- if hasKey $app "labels" }}
+      labels: {{ $app.labels | toJson }}
+    {{- else }}
+      labels: {}
+    {{- end }}
 
     spec:
       source:
         helm:
-          valueFiles: {{ default $defVal.helm.valueFiles (dig "helm" "valueFiles" list $svc) | toJson }}
+          valueFiles: {{ default $defVal.helm.valueFiles (dig "helm" "valueFiles" list $app) | toJson }}
 
           {{- $runtimeHelmParameters := dig "helm" "parameters" list $runtime }}
-          {{- $svcHelmParameters := dig "helm" "parameters" list $svc }}
-          parameters: {{ concat $runtimeHelmParameters $svcHelmParameters | toJson }}
+          {{- $appHelmParameters := dig "helm" "parameters" list $app }}
+          parameters: {{ concat $runtimeHelmParameters $appHelmParameters | toJson }}
 
-      syncPolicy: {{ default $defVal.syncPolicy (dig "syncPolicy" dict $svc) | toJson }}
+      syncPolicy: {{ default $defVal.syncPolicy (dig "syncPolicy" dict $app) | toJson }}
 
-      {{- $svcIgnoreDifferences := dig "ignoreDifferences" list $svc }}
-      {{- $ignoreDifferences := concat $globals.ignoreDifferences $svcIgnoreDifferences }}
+      {{- $appIgnoreDifferences := dig "ignoreDifferences" list $app }}
+      {{- $ignoreDifferences := concat $globals.ignoreDifferences $appIgnoreDifferences }}
       ignoreDifferences: {{ $ignoreDifferences | toJson }}
